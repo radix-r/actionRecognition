@@ -2,11 +2,14 @@ import argparse
 import time
 
 import torch
+from torch import utils as utils
+from torch.utils import data as data
+
 from torch import optim as optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 import sys
-
+import Helper
 import CNN
 
 
@@ -121,6 +124,9 @@ def main():
 
     parser.add_argument('--save-model', action='store_true', default=False,
                         help='For Saving the current Model')
+
+    parser.add_argument('--v',action='store_true', default=False,
+                        help='Enable extra output')
     args = parser.parse_args()
 
     #check if we can use GPU for training.
@@ -136,20 +142,21 @@ def main():
     # ======================================================================
     #  STEP 0: Load data from the MNIST database.
     #  This loads our training and test data from the MNIST database files available in torchvision package.
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(), #scale pixel values between 0 and 1
-                           transforms.Normalize((0.1307,), (0.3081,)) #normalize using mean and standard deviation
-                       ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-            transforms.ToTensor(), #scale pixel values between 0 and 1
-            transforms.Normalize((0.1307,), (0.3081,)) #normalize using mean and standard deviation
-        ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    data = Helper.ActionLocationDataset("ucfAction", args.v)
+
+
+
+
+
+    train_loader = torch.utils.data.DataLoader(
+        data,
+        batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    test_loader = torch.utils.data.DataLoader(
+        data,
+        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+    '''
     # ======================================================================
     #  STEP 1: Train a baseline model.
     #  This trains a feed forward neural network with one hidden layer.
@@ -212,25 +219,25 @@ def main():
         print(20 * '*' + 'model 4' + 20 * '*')
         print('accuracy is %f' % (accuracy))
         print()
-
+    '''
     # ======================================================================
     #  STEP 5: Add dropout to reduce overfitting.
     #
     #  Expected accuracy: 99.40%
 
-    if args.mode == 5:
-        args.learning_rate = 0.03
-        args.num_epochs = 40
-        args.hiddenSize = 1000
+    #if args.mode == 5:
+    args.learning_rate = 0.03
+    args.num_epochs = 40
+    args.hiddenSize = 1000
 
-        model = CNN.Net(5, args).to(device)
+    model = CNN.Net(5, args).to(device)
 
-        accuracy = train_and_test(args, device, model, test_loader, train_loader)
+    accuracy = train_and_test(args, device, model, test_loader, train_loader)
 
-        # Output accuracy.
-        print(20 * '*' + 'model 5' + 20 * '*')
-        print('accuracy is %f' % (accuracy))
-        print()
+    # Output accuracy.
+    print(20 * '*' + 'model 5' + 20 * '*')
+    print('accuracy is %f' % (accuracy))
+    print()
 
 
 if __name__ == '__main__':
